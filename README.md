@@ -25,4 +25,3 @@ Simply open `index.html` in your web browser to start using the timer.
 - HTML5
 - CSS3
 - Vanilla JavaScript
-
