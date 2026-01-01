@@ -143,6 +143,15 @@ class TimTimTimer {
         
         this.arrivalTime = arrival;
         this.departureTime = departure;
+
+        // Calculate total duration for the progress ring to represent (Arrival - Departure)
+        this.totalSeconds = Math.floor((this.arrivalTime.getTime() - this.departureTime.getTime()) / 1000);
+
+        // If totalSeconds is negative (arrival before departure), handle appropriately (e.g., set to 0 or throw error)
+        if (this.totalSeconds < 0) {
+            alert('Aankomsttijd moet na Vertrektijd zijn!');
+            return;
+        }
         
         // Switch to timer screen
         this.setupScreen.style.display = 'none';
@@ -153,40 +162,38 @@ class TimTimTimer {
     }
     
     setupGauge() {
-        const centerX = 200;
-        const centerY = 200;
-        const radius = 160;
+        const centerX = 225;
+        const centerY = 225;
+        const radius = 200;
         
         // Define the 270-degree arc: open at the bottom (90-degree gap)
-        // Start at 225 degrees (bottom-left) and go clockwise to 135 degrees (top-right)
-        const startAngle = 225; // 7:30 position
-        const endAngle = 135;   // 1:30 position (which is 225 + 270 degrees clockwise)
-        
-        const path = this.createArcPath(centerX, centerY, radius, startAngle, endAngle, true);
+        // Arc starts from the bottom-right of the gap (4:30 position) and sweeps clockwise to bottom-left of the gap (7:30 position)
+        const startAngle = 135; // 4:30 position (bottom-right)
+        const endAngle = 225;   // 7:30 position (bottom-left)
+        const totalArcDegrees = 270;
+
+        const path = this.createArcPath(centerX, centerY, radius, startAngle, endAngle, true, totalArcDegrees);
         this.progressRing.setAttribute('d', path);
         this.progressRingBg.setAttribute('d', path);
         
-        // Calculate circumference for a 270-degree arc
-        const arcAngle = 270; // degrees
-        const circumference = (arcAngle * Math.PI * radius) / 180;
+        const circumference = (totalArcDegrees * Math.PI * radius) / 180;
         
         this.progressRing.style.strokeDasharray = `${circumference} ${circumference}`;
         this.progressRing.style.strokeDashoffset = circumference;
     }
     
-    createArcPath(centerX, centerY, radius, startAngle, endAngle, clockwise) {
-        const start = this.polarToCartesian(centerX, centerY, radius, endAngle);
-        const end = this.polarToCartesian(centerX, centerY, radius, startAngle);
-        
-        const largeArcFlag = ((clockwise && (endAngle - startAngle + 360) % 360 > 180) ||
-                              (!clockwise && (startAngle - endAngle + 360) % 360 > 180)) ? 1 : 0;
-        const sweepFlag = clockwise ? 1 : 0;
+    createArcPath(centerX, centerY, radius, startAngleDegrees, endAngleDegrees, clockwise, totalArcDegrees) {
+        const start = this.polarToCartesian(centerX, centerY, radius, startAngleDegrees);
+        const end = this.polarToCartesian(centerX, centerY, radius, endAngleDegrees);
+
+        const largeArcFlag = totalArcDegrees > 180 ? 1 : 0;
+        const sweepFlag = clockwise ? 1 : 0; 
         
         return `M ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArcFlag} ${sweepFlag} ${end.x} ${end.y}`;
     }
     
     polarToCartesian(centerX, centerY, radius, angleInDegrees) {
-        const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
+        const angleInRadians = angleInDegrees * Math.PI / 180.0; // SVG angles are 0 at 3 o'clock, positive clockwise
         return {
             x: centerX + (radius * Math.cos(angleInRadians)),
             y: centerY + (radius * Math.sin(angleInRadians))
@@ -214,20 +221,23 @@ class TimTimTimer {
     }
     
     updateCountdown() {
-        if (!this.departureTime) return;
+        if (!this.arrivalTime) return;
         
         const now = new Date();
-        const diff = Math.floor((this.departureTime - now) / 1000);
+        const diff = Math.floor((this.arrivalTime - now) / 1000);
         
         this.remainingSeconds = diff;
         
-        if (diff <= 0) {
-            this.remainingSeconds = 0;
-            this.complete();
-        }
-        
+        // The time display should show time until arrival, but it can go negative if arrival passed.
+        // The progress ring should only fill up to arrival time.
+
         this.updateDisplay();
         this.updateProgressRing();
+
+        if (diff <= 0 && this.isRunning) {
+            // If arrival time has passed, stop the countdown
+            this.complete();
+        }
     }
     
     complete() {
@@ -248,31 +258,32 @@ class TimTimTimer {
     }
     
     updateProgressRing() {
-        if (!this.departureTime) return;
-        
-        // Calculate progress based on time until departure
-        // Assume 15 minute window for the progress ring
-        const now = new Date();
-        const windowStart = new Date(this.departureTime.getTime() - 15 * 60 * 1000);
-        const totalWindow = 15 * 60; // 15 minutes in seconds
-        
-        if (now < windowStart) {
-            // Before the window, ring is empty
-            const radius = 160;
+        if (!this.departureTime || !this.arrivalTime || this.totalSeconds <= 0) {
+            // If times are not set or total duration is invalid, reset the ring to empty
             const arcAngle = 270; // degrees
+            const radius = 200; // Corrected radius
             const circumference = (arcAngle * Math.PI * radius) / 180;
             this.progressRing.style.strokeDashoffset = circumference;
             return;
         }
-        
-        const elapsed = Math.floor((now - windowStart) / 1000);
-        const progress = Math.max(0, Math.min(1, elapsed / totalWindow));
-        
-        const radius = 160;
+
+        const now = new Date();
+        let elapsedSeconds = Math.floor((now.getTime() - this.departureTime.getTime()) / 1000);
+
+        // Ensure elapsedSeconds doesn't go below 0 or above totalSeconds
+        elapsedSeconds = Math.max(0, Math.min(this.totalSeconds, elapsedSeconds));
+
+        // Calculate progress: 0 when at departureTime, 1 when at arrivalTime
+        const progress = elapsedSeconds / this.totalSeconds;
+
         const arcAngle = 270; // degrees
+        const radius = 200; // Corrected radius
         const circumference = (arcAngle * Math.PI * radius) / 180;
-        const offset = circumference * (1 - progress);
         
+        // The offset should start at circumference (empty ring) and go to 0 (full ring)
+        // as progress goes from 0 to 1.
+        const offset = circumference * (1 - progress);
+
         this.progressRing.style.strokeDashoffset = offset;
     }
 }

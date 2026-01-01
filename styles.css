@@ -261,13 +261,8 @@ body.light-mode .form-group input[type="text"]::placeholder {
 
 .timer-gauge {
     position: relative;
-    width: 400px;
-    height: 400px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 16px; /* Add gap for spacing between elements */
+    width: 450px;
+    height: 450px;
 }
 
 .gauge-svg {
@@ -303,9 +298,6 @@ body.light-mode .progress-ring-bg {
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 10;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 .eye-icon {
@@ -325,7 +317,7 @@ body.light-mode .eye-icon {
 
 .timer-label {
     position: absolute;
-    top: calc(50% + 60px); /* Position below eye icon */
+    top: calc(50% + 90px); /* Position below eye icon */
     left: 50%;
     transform: translateX(-50%);
     z-index: 10;
@@ -345,7 +337,7 @@ body.light-mode .timer-label {
 
 .time-text {
     position: absolute;
-    bottom: 20px; /* Position at bottom gap */
+    bottom: 40px; /* Position at bottom gap */
     left: 50%;
     transform: translateX(-50%);
     z-index: 10;
@@ -375,13 +367,13 @@ body.light-mode .time-text {
 
 @media (max-width: 768px) {
     .timer-gauge {
-        width: 350px;
-        height: 350px;
+        width: 400px;
+        height: 400px;
     }
 
     .gauge-svg {
-        width: 350px;
-        height: 350px;
+        width: 400px;
+        height: 400px;
     }
 
     .time-text {
