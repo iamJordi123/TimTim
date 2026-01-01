@@ -153,18 +153,46 @@ class TimTimTimer {
     }
     
     setupGauge() {
-        const radius = 160; // Matches r attribute in index.html SVG circle
-        const circumference = 2 * Math.PI * radius;
+        const centerX = 200;
+        const centerY = 200;
+        const radius = 160;
+        
+        // Define the 270-degree arc: open at the bottom (90-degree gap)
+        // Start at 225 degrees (bottom-left) and go clockwise to 135 degrees (top-right)
+        const startAngle = 225; // 7:30 position
+        const endAngle = 135;   // 1:30 position (which is 225 + 270 degrees clockwise)
+        
+        const path = this.createArcPath(centerX, centerY, radius, startAngle, endAngle, true);
+        this.progressRing.setAttribute('d', path);
+        this.progressRingBg.setAttribute('d', path);
+        
+        // Calculate circumference for a 270-degree arc
+        const arcAngle = 270; // degrees
+        const circumference = (arcAngle * Math.PI * radius) / 180;
         
         this.progressRing.style.strokeDasharray = `${circumference} ${circumference}`;
         this.progressRing.style.strokeDashoffset = circumference;
-        
-        // The background ring also uses the same circumference for consistency
-        this.progressRingBg.style.strokeDasharray = `${circumference} ${circumference}`;
     }
     
-    // Removed createArcPath and polarToCartesian as they are not needed for a full circle
-
+    createArcPath(centerX, centerY, radius, startAngle, endAngle, clockwise) {
+        const start = this.polarToCartesian(centerX, centerY, radius, endAngle);
+        const end = this.polarToCartesian(centerX, centerY, radius, startAngle);
+        
+        const largeArcFlag = ((clockwise && (endAngle - startAngle + 360) % 360 > 180) ||
+                              (!clockwise && (startAngle - endAngle + 360) % 360 > 180)) ? 1 : 0;
+        const sweepFlag = clockwise ? 1 : 0;
+        
+        return `M ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArcFlag} ${sweepFlag} ${end.x} ${end.y}`;
+    }
+    
+    polarToCartesian(centerX, centerY, radius, angleInDegrees) {
+        const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
+        return {
+            x: centerX + (radius * Math.cos(angleInRadians)),
+            y: centerY + (radius * Math.sin(angleInRadians))
+        };
+    }
+    
     startCountdown() {
         if (!this.departureTime) return;
         
@@ -231,7 +259,8 @@ class TimTimTimer {
         if (now < windowStart) {
             // Before the window, ring is empty
             const radius = 160;
-            const circumference = 2 * Math.PI * radius;
+            const arcAngle = 270; // degrees
+            const circumference = (arcAngle * Math.PI * radius) / 180;
             this.progressRing.style.strokeDashoffset = circumference;
             return;
         }
@@ -240,7 +269,8 @@ class TimTimTimer {
         const progress = Math.max(0, Math.min(1, elapsed / totalWindow));
         
         const radius = 160;
-        const circumference = 2 * Math.PI * radius;
+        const arcAngle = 270; // degrees
+        const circumference = (arcAngle * Math.PI * radius) / 180;
         const offset = circumference * (1 - progress);
         
         this.progressRing.style.strokeDashoffset = offset;
