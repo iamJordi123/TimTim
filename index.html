@@ -83,23 +83,26 @@
             <div class="timer-display-container">
                 <div class="timer-gauge">
                     <svg class="gauge-svg" width="400" height="400" viewBox="0 0 400 400">
-                        <!-- Background arc (270 degrees) -->
-                        <path
+                        <!-- Background circle (full 360 degrees) -->
+                        <circle
                             class="progress-ring-bg"
                             id="progressRingBg"
+                            cx="200" cy="200" r="160"
                             fill="none"
                             stroke="rgba(255, 255, 255, 0.15)"
                             stroke-width="16"
                             stroke-linecap="round"
                         />
-                        <!-- Progress ring (270 degrees) -->
-                        <path
+                        <!-- Progress ring (full 360 degrees) -->
+                        <circle
                             class="progress-ring"
                             id="progressRing"
+                            cx="200" cy="200" r="160"
                             fill="none"
                             stroke="#4A90E2"
                             stroke-width="16"
                             stroke-linecap="round"
+                            transform="rotate(-90 200 200)"
                         />
                     </svg>
                     
