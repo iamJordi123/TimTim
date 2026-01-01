@@ -4,66 +4,125 @@ class TimTimTimer {
         this.remainingSeconds = 0;
         this.intervalId = null;
         this.isRunning = false;
+        this.departureTime = null;
         
         this.timeDisplay = document.getElementById('timeDisplay');
-        this.needle = document.getElementById('needle');
-        this.tickMarks = document.getElementById('tickMarks');
+        this.currentTimeDisplay = document.getElementById('currentTime');
+        this.departureTimeDisplay = document.getElementById('departureTime');
+        this.progressRing = document.getElementById('progressRing');
+        this.progressRingBg = document.getElementById('progressRingBg');
+        this.resetBtn = document.getElementById('resetBtn');
         
+        this.setupEventListeners();
         this.setupGauge();
+        this.updateCurrentTime();
         this.startCountdown();
+        
+        // Update current time every second
+        setInterval(() => this.updateCurrentTime(), 1000);
+    }
+    
+    setupEventListeners() {
+        this.resetBtn.addEventListener('click', () => this.reset());
     }
     
     setupGauge() {
-        // Create tick marks around the circle
+        // Set up the C-shaped arc path
+        // The arc goes from bottom-left, up left side, over top, down right side to bottom-right
+        // This creates a C-shape open at the bottom
         const centerX = 200;
         const centerY = 200;
         const radius = 140;
-        const numTicks = 60; // 60 ticks for seconds
         
-        for (let i = 0; i < numTicks; i++) {
-            const angle = (i / numTicks) * 360 - 90; // Start at top (-90 degrees)
-            const radian = (angle * Math.PI) / 180;
-            
-            const isMajor = i % 5 === 0; // Major tick every 5 seconds
-            const tickLength = isMajor ? 20 : 12;
-            const innerRadius = radius - tickLength;
-            
-            const x1 = centerX + radius * Math.cos(radian);
-            const y1 = centerY + radius * Math.sin(radian);
-            const x2 = centerX + innerRadius * Math.cos(radian);
-            const y2 = centerY + innerRadius * Math.sin(radian);
-            
-            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-            line.setAttribute('x1', x1);
-            line.setAttribute('y1', y1);
-            line.setAttribute('x2', x2);
-            line.setAttribute('y2', y2);
-            if (isMajor) {
-                line.classList.add('major');
-            }
-            
-            this.tickMarks.appendChild(line);
-        }
+        // Create C-shape: from bottom-left (210 degrees) to bottom-right (330 degrees)
+        // This is 240 degrees of arc, leaving bottom center open
+        const startAngle = 210; // Bottom-left (7 o'clock)
+        const endAngle = 330; // Bottom-right (5 o'clock)
+        
+        const path = this.createArcPath(centerX, centerY, radius, startAngle, endAngle, true);
+        this.progressRing.setAttribute('d', path);
+        this.progressRingBg.setAttribute('d', path);
+        
+        // Set stroke-dasharray for animation
+        // Arc is 240 degrees
+        const arcAngle = 240; // degrees
+        const circumference = (arcAngle * Math.PI * radius) / 180;
+        this.progressRing.style.strokeDasharray = `${circumference} ${circumference}`;
+        this.progressRing.style.strokeDashoffset = circumference;
+    }
+    
+    createArcPath(centerX, centerY, radius, startAngle, endAngle, clockwise) {
+        const start = this.polarToCartesian(centerX, centerY, radius, endAngle);
+        const end = this.polarToCartesian(centerX, centerY, radius, startAngle);
+        const largeArcFlag = Math.abs(endAngle - startAngle) > 180 ? 1 : 0;
+        const sweepFlag = clockwise ? 1 : 0;
+        
+        return `M ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArcFlag} ${sweepFlag} ${end.x} ${end.y}`;
+    }
+    
+    polarToCartesian(centerX, centerY, radius, angleInDegrees) {
+        const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
+        return {
+            x: centerX + (radius * Math.cos(angleInRadians)),
+            y: centerY + (radius * Math.sin(angleInRadians))
+        };
     }
     
     startCountdown() {
-        // Start with 5 minutes for demo
-        this.totalSeconds = 5 * 60;
-        this.remainingSeconds = this.totalSeconds;
+        // Set departure time (14:30:00)
+        const now = new Date();
+        const departure = new Date(now);
+        departure.setHours(14, 30, 0, 0);
+        
+        // If departure time has passed today, set it for tomorrow
+        if (departure < now) {
+            departure.setDate(departure.getDate() + 1);
+        }
+        
+        this.departureTime = departure;
+        this.updateDepartureDisplay();
+        
+        // Calculate initial countdown
+        this.updateCountdown();
         
         this.isRunning = true;
-        this.updateDisplay();
-        this.updateNeedle();
-        
         this.intervalId = setInterval(() => {
-            this.remainingSeconds--;
-            this.updateDisplay();
-            this.updateNeedle();
-            
-            if (this.remainingSeconds <= 0) {
-                this.complete();
-            }
+            this.updateCountdown();
         }, 1000);
+    }
+    
+    updateCurrentTime() {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        this.currentTimeDisplay.textContent = `${hours}:${minutes}:${seconds}`;
+    }
+    
+    updateDepartureDisplay() {
+        if (!this.departureTime) return;
+        
+        const hours = String(this.departureTime.getHours()).padStart(2, '0');
+        const minutes = String(this.departureTime.getMinutes()).padStart(2, '0');
+        const seconds = String(this.departureTime.getSeconds()).padStart(2, '0');
+        this.departureTimeDisplay.textContent = `${hours}:${minutes}:${seconds}`;
+    }
+    
+    updateCountdown() {
+        if (!this.departureTime) return;
+        
+        const now = new Date();
+        const diff = Math.floor((this.departureTime - now) / 1000);
+        
+        this.remainingSeconds = diff;
+        
+        if (diff <= 0) {
+            this.remainingSeconds = 0;
+            this.complete();
+        }
+        
+        this.updateDisplay();
+        this.updateProgressRing();
     }
     
     complete() {
@@ -72,9 +131,22 @@ class TimTimTimer {
             this.intervalId = null;
         }
         this.isRunning = false;
-        this.remainingSeconds = 0;
-        this.updateDisplay();
-        this.updateNeedle();
+    }
+    
+    reset() {
+        // Reset to a new 15-minute countdown from now
+        const now = new Date();
+        const newDeparture = new Date(now.getTime() + 15 * 60 * 1000);
+        this.departureTime = newDeparture;
+        this.updateDepartureDisplay();
+        this.updateCountdown();
+        
+        if (!this.isRunning) {
+            this.isRunning = true;
+            this.intervalId = setInterval(() => {
+                this.updateCountdown();
+            }, 1000);
+        }
     }
     
     updateDisplay() {
@@ -82,24 +154,23 @@ class TimTimTimer {
         const minutes = Math.floor(total / 60);
         const seconds = total % 60;
         
-        // Format like "-0:16" for negative or "0:16" for positive
-        const sign = this.remainingSeconds < 0 ? '-' : '';
         this.timeDisplay.textContent = 
-            `${sign}${minutes}:${String(seconds).padStart(2, '0')}`;
+            `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     }
     
-    updateNeedle() {
-        if (this.totalSeconds === 0) {
-            this.needle.style.transform = 'rotate(0deg)';
-            return;
-        }
+    updateProgressRing() {
+        if (!this.departureTime) return;
         
-        // Calculate angle: 0% = -90deg (top), 100% = 270deg (full circle)
-        // Needle starts at top and rotates clockwise
-        const progress = this.remainingSeconds / this.totalSeconds;
-        const angle = -90 + (1 - progress) * 360;
+        // For demo: assume 15 minute window (from 15 min before departure to departure)
+        const totalSeconds = 15 * 60;
+        const progress = Math.max(0, Math.min(1, this.remainingSeconds / totalSeconds));
         
-        this.needle.style.transform = `rotate(${angle}deg)`;
+        const radius = 140;
+        const arcAngle = 240; // degrees (C-shape arc)
+        const circumference = (arcAngle * Math.PI * radius) / 180;
+        const offset = circumference * (1 - progress);
+        
+        this.progressRing.style.strokeDashoffset = offset;
     }
 }
 

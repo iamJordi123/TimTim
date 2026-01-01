@@ -6,12 +6,40 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    background: #b3d9f2;
+    background: #1a1f2e;
     min-height: 100vh;
+    color: white;
+    overflow-x: hidden;
+}
+
+.header {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
-    padding: 20px;
+    padding: 16px 20px;
+    background: #1a1f2e;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+}
+
+.sun-icon {
+    width: 24px;
+    height: 24px;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+}
+
+.current-time {
+    font-size: 18px;
+    font-weight: 500;
+    color: white;
+    font-variant-numeric: tabular-nums;
 }
 
 .container {
@@ -19,12 +47,53 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    padding: 20px;
+    min-height: calc(100vh - 60px);
+}
+
+.timer-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 500px;
+}
+
+.departure-time {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.departure-badge {
+    background: #2a2f3e;
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.departure-label {
+    color: white;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.departure-text {
+    color: white;
+    font-size: 18px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
 }
 
 .timer-gauge {
     position: relative;
     width: 400px;
     height: 400px;
+    margin: 20px 0;
 }
 
 .gauge-svg {
@@ -32,37 +101,70 @@ body {
     height: 100%;
 }
 
-.tick-marks line {
-    stroke: #666;
-    stroke-width: 2;
+.progress-ring {
+    transition: stroke-dashoffset 0.3s ease;
+    filter: drop-shadow(0 0 4px rgba(74, 144, 226, 0.5));
 }
 
-.tick-marks line.major {
-    stroke-width: 3;
-    stroke: #333;
+.progress-ring-bg {
+    opacity: 0.3;
 }
 
-.needle {
-    transform-origin: 200px 200px;
-    transition: transform 0.1s linear;
-}
-
-.countdown-display {
+.center-content {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.eye-icon {
+    width: 80px;
+    height: 80px;
+    opacity: 0.9;
+}
+
+.timer-label {
+    color: white;
+    font-size: 16px;
+    font-weight: 400;
+    text-align: center;
+}
+
+.countdown-display {
+    margin: 30px 0;
     text-align: center;
 }
 
 .time-text {
-    font-size: 72px;
+    font-size: 64px;
     font-weight: 700;
-    color: #fff;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    color: white;
     letter-spacing: 2px;
     font-variant-numeric: tabular-nums;
+}
+
+.reset-button {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 16px;
+    font-weight: 400;
+    cursor: pointer;
+    padding: 12px 24px;
+    margin-top: 20px;
+    transition: opacity 0.2s;
+}
+
+.reset-button:hover {
+    opacity: 0.7;
+}
+
+.reset-button:active {
+    opacity: 0.5;
 }
 
 @media (max-width: 480px) {
@@ -77,6 +179,15 @@ body {
     }
     
     .time-text {
-        font-size: 56px;
+        font-size: 48px;
+    }
+    
+    .eye-icon {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .timer-label {
+        font-size: 14px;
     }
 }
